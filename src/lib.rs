@@ -2,6 +2,7 @@
 pub struct XmlWriter {
     buf: Vec<u8>,
     stack: Vec<String>,
+    attrs: bool,
 }
 
 impl XmlWriter {
@@ -17,6 +18,7 @@ impl XmlWriter {
         self.buf.push(b'"');
         self.buf.extend_from_slice(value.as_bytes());
         self.buf.push(b'"');
+        self.attrs = true;
     }
 
     pub fn open(&mut self, tag: &str) {
@@ -39,7 +41,7 @@ impl XmlWriter {
         let tag = self.stack.pop().unwrap();
         let needle = format!("<{}", tag);
 
-        if self.buf.ends_with(needle.as_bytes()) {
+        if self.buf.ends_with(needle.as_bytes()) || self.attrs {
             self.buf.push(b'/');
             self.buf.push(b'>');
             return;
@@ -61,6 +63,7 @@ impl XmlWriter {
         }
 
         self.buf.extend_from_slice(text.as_bytes());
+        self.attrs = false;
     }
 
     pub fn write_comment(&mut self, text: &str) {
